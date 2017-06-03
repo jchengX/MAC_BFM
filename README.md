@@ -1,5 +1,4 @@
 # wifi
-Mini-Mac
 Build a bfm to simulation WIFI station basic behavior at mac level, and build a monitor to collect tx/rx packet. And build a scoreboard to compare the packets from bfm and monitor. 
 1.	Interface 
 a.	clk
