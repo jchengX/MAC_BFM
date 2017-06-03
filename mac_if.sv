@@ -1,7 +1,7 @@
 ////////////////////////////////////////
-//file:mac
-//data:2017/06/03
-//description:mac interface
+//File:mac
+//Data:2017/06/03
+//Description:mac level interface
 ///////////////////////////////////////
 
 interface mac_if(input rst,input clk);//define interface
