@@ -1,12 +1,12 @@
-package crc7_pkg;
+package mac_pkg;
   import uvm_pkg::*;
   
-  `include "crc7_sequencer.sv"
-  `include "crc7_monitor.sv"
-  `include "crc7_driver.sv"
-  `include "crc7_agent.sv"
-  `include "crc7_scoreboard.sv"
-  `include "crc7_config.sv"
-  `include "crc7_env.sv"
-  `include "crc7_test.sv"
-endpackage: crc7_pkg
+  `include "mac_sequencer.sv"
+  `include "mac_monitor.sv"
+  `include "mac_driver.sv"
+  `include "mac_agent.sv"
+  `include "mac_scoreboard.sv"
+  `include "mac_config.sv"
+  `include "mac_env.sv"
+  `include "mac_test.sv"
+endpackage: mac_pkg
