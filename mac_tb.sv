@@ -21,14 +21,15 @@ module mac_tb_top;
 	//interface declaration
 	mac_if mac_if(.rst(rst),.clk(clk));
   
-	//connect the interface to the DUT
+	//connect the interface to the dut
 	dut u_dut(.clk(clk),
 		  .rst(rst),
 		  .tx_frame(mac_if.tx_frame),
 	   	  .tx_valid(mac_if.tx_valid),
 	  	  .tx_data(mac_if.tx_data),
 	  	  .rx_frame(mac_if.rx_frame),
-		  .rx_valid(mac_if.rx_valid)
+		  .rx_valid(mac_if.rx_valid),
+		  .rx_data(mac_if.rx_data)
 		  );
 	  
 	initial
