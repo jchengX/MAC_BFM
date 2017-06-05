@@ -1,1 +1,3 @@
-class beacon_backet
+class beacon_packet extends packet;
+
+  
