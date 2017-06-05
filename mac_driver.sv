@@ -15,19 +15,27 @@ class mac_driver extends uvm_driver#(mac_transaction);
   
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
+    mac_transaction tr;
     reset();
     forever begin
-      mac_transaction tr;
       @(vif.clk);
       seq_item_port.get_next_item(tr);
-      case(tr.op_cmd)
-        RESET:reset();
-        SEND_UNICAST:  
-        SEND_BEACON:
-        SEND_AGGREGATE:
-        default:`uvmfatal("mac_driver","No valid command!")
-      endcase
-    seq_item_port.item_done();
+      case(tr.status)
+        TRANSMIT:begin
+          case(tr.op_cmd)
+            RESET:reset();
+            SEND_UNICAST:send_unicast(tr.address,tr.data);
+            SEND_BEACON:send_beacon();
+            SEND_AGGREGATE:send_aggregate(tr.address,tr.data);
+            default:`uvm_fatal("mac_driver","No valid command!")
+          endcase
+        RECEIVE:begin
+          case(tr.rx_type)
+            UNICAST:send_ack();
+            AGGREGATE:send_block_ack();
+            default:@(vif.clk);
+          endcase
+      seq_item_port.item_done();
     end
   endtask: run_phase
   
@@ -76,7 +84,7 @@ class mac_driver extends uvm_driver#(mac_transaction);
     vif.sig_data = 1'b0;
     vif.sig_rst = 1'b0;
     forever begin   
-  @(negedge vif.sig_clk)
+    @(negedge vif.sig_clk)
     begin
     vif.sig_rst = 1'b0;
     vif.sig_data = data[counter - 1];
@@ -87,9 +95,8 @@ class mac_driver extends uvm_driver#(mac_transaction);
        vif.sig_rst = 1'b1;
       end
     end         
-  //seq_item_port.item_done();
   end
-  endtask: drive
+  endtask: send_unicast
   
   //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
   //task   : send_beacon
