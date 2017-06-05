@@ -49,12 +49,26 @@ class mac_driver extends uvm_driver#(mac_transaction);
   endtask:reset
   
   //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  //task   : send_ack
+  //input  : n/a
+  //output : n/a
+  //descripton : send ack when receive unicast packet
+  //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  
+  //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  //task   : send_block_ack
+  //input  : n/a
+  //output : n/a
+  //descripton : send block ack when receive aggregate packet
+  //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  
+  //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
   //task   : send_unicast
   //input  : addre1,address2,address3,address4,data
   //output : n/a
   //descripton : drive unicast packet to interface
   //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
-  task send_unicast(input bit [] address,input bit [DATA_LEN-1:0] data);
+  task send_unicast(input bit [47:0] address,input bit [DATA_LEN-1:0] data);
     mac_transaction tr;
     integer counter = 40;
     bit [39:0] data;
@@ -91,6 +105,8 @@ class mac_driver extends uvm_driver#(mac_transaction);
   //output : n/a
   //descripton : drive aggregate packet to interface
   //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  
+  
 endclass: mac_driver
   
         
