@@ -1,72 +1,72 @@
-////////////////////////////////////
-// File : mac_agent
+//////////////////////////////////////////
+// File : mac_env
 // Data : 2017/06/03
-// Description : mac bfm agent
-////////////////////////////////////
+// Description : mac bfm env
+/////////////////////////////////////////
 
-`ifndef MAC_AGENT__SV
-`define MAC_AGENT__SV
-
-typedef class mac_agent;
-
-class mac_agent extends uvm_agent;
-    bit             sqr_on=1'b1;
-    bit             drv_on=1'b1;
-    bit             mon_on=1'b1;
-
-    mac_config      cfg;
-    mac_sequencer   sqr;
-    mac_driver      drv;
-    mac_monitor     mon;
-
-    mac_if         vif;
-
-    `uvm_component_utils_begin(mac_agent)
-        `uvm_field_int(sqr_on,UVM_ALL_ON)
-        `uvm_field_int(drv_on,UVM_ALL_ON)
-        `uvm_field_int(mon_on,UVM_ALL_ON)
-        `uvm_field_object(cfg,UVM_ALL_ON)
-        `uvm_field_object(sqr,UVM_ALL_ON)
-        `uvm_field_object(drv,UVM_ALL_ON)
-        `uvm_field_object(mon,UVM_ALL_ON)
-    `uvm_component_utils_end
+`ifndef MAC_ENV__SV
+`define MAC_ENV__SV
+//ToDo: Include required files here
+class mac_vsequencer extends uvm_sequencer;
+    //ral_sys_TEST    regmodel;
+    `uvm_component_utils(mac_vsequencer)
     
-    function new(string name, uvm_component parent = null);
+    function new(input string name, uvm_component parent=null);
         super.new(name, parent);
-    endfunction
+    endfunction : new
 
-    virtual function void build_phase(uvm_phase phase);
+endclass
 
-        //if(!this.get_config_int("sqr_on", sqr_on)) begin
-        //    `uvm_fatal("get_config_int", "Couldn't found sqr_on")
-        //end
-        //if(!this.get_config_int("drv_on", drv_on)) begin
-        //    `uvm_fatal("get_config_int", "Couldn't found drv_on")
-        //end
-        //if(!this.get_config_int("mon_on", mon_on)) begin
-        //    `uvm_fatal("get_config_int", "Couldn't found mon_on")
-        //end
+//Including all the required component files here
+class mac_env extends uvm_env;
+    //ral_sys_TEST    regmodel;
+    mac_agent       mac_agt; 
+    //reg2mac_adapter reg2host;
+    mac_vsequencer  vsqr;
+    
+     `uvm_component_utils(mac_env)
 
-        if(sqr_on == 1'b1) begin
-            sqr = mac_sequencer::type_id::create("sqr", this);
-        end
-        if(drv_on == 1'b1) begin
-            drv = mac_driver::type_id::create("drv", this);
-        end
-        if(mon_on == 1'b1) begin
-            mon = mac_monitor::type_id::create("mon", this);
-        end
+    extern function new(string name= "mac_env", uvm_component parent=null);
+    extern virtual function void build_phase(uvm_phase phase);
+    extern virtual function void connect_phase(uvm_phase phase);
+    extern virtual task main_phase(uvm_phase phase);
+endclass: mac_env
 
-        if (!uvm_config_db#(mac_vif)::get(this, "", "vif", vif)) begin
-            `uvm_fatal("mac_agent", "No virtual interface specified for this agent instance")
-        end
-    endfunction: build_phase
+function mac_env::new(string name= "mac_env",uvm_component parent=null);
+    super.new(name,parent);
+endfunction:new
 
-    virtual function void connect_phase(uvm_phase phase);
-        if((drv_on==1'b1)&&(sqr_on==1'b1)) begin
-            drv.seq_item_port.connect(sqr.seq_item_export);
-        end
-    endfunction
-endclass: mac_agent
+function void mac_env::build_phase(uvm_phase phase);
+    super.build();
+    uvm_config_db#(int)::set(this,"mac_agt","sqr_on",1);
+    uvm_config_db#(int)::set(this,"mac_agt","drv_on",1);
+    uvm_config_db#(int)::set(this,"mac_agt","mon_on",1);
+    mac_agt = mac_agent::type_id::create("mac_agt",this); 
 
-`endif // MAC_AGENT__SV
+    //regmodel = ral_sys_TEST::type_id::create("regmodel",this);
+    //regmodel.build();
+    //regmodel.lock_model();
+    //reg2host = new("reg2host");
+
+    vsqr = mac_vsequencer::type_id::create("vsqr",this);
+endfunction: build_phase
+
+function void mac_env::connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    //Connecting the driver to the sequencer via ports
+    //regmodel.set_hdl_path_root("");
+    regmodel.default_map.set_sequencer(mac_agt.sqr,reg2host);
+    vsqr.regmodel = regmodel;
+
+    // ToDo: Register any required callbacks
+
+endfunction: connect_phase
+
+task mac_env::main_phase(uvm_phase phase);
+    super.main_phase(phase);
+    phase.raise_objection(this,"");
+    //ToDo: Run your simulation here
+    phase.drop_objection(this);
+endtask:main_phase
+
+`endif // MAC_ENV__S
