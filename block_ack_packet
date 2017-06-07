@@ -1,0 +1,16 @@
+class block_ack_packet extends packet;
+	logic [47:0] RA;
+	logic [47:0] TA;
+	logic [15:0] BA_CONT;
+	logic [15:0] BA_INFO;
+
+	//function new();
+	//endfunction
+	
+	function agent_block_ack_packet();
+	type = 2'b01;
+	sub_type = 4'b1001;
+	agt_block_ack_packet = {frame_control,duration,RA,TA,BA_CONT,BA_INFO,fcs};
+	endfunction
+
+endclas
