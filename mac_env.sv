@@ -38,16 +38,7 @@ endfunction:new
 
 function void mac_env::build_phase(uvm_phase phase);
     super.build();
-    uvm_config_db#(int)::set(this,"mac_agt","sqr_on",1);
-    uvm_config_db#(int)::set(this,"mac_agt","drv_on",1);
-    uvm_config_db#(int)::set(this,"mac_agt","mon_on",1);
     mac_agt = mac_agent::type_id::create("mac_agt",this); 
-
-    //regmodel = ral_sys_TEST::type_id::create("regmodel",this);
-    //regmodel.build();
-    //regmodel.lock_model();
-    //reg2host = new("reg2host");
-
     vsqr = mac_vsequencer::type_id::create("vsqr",this);
 endfunction: build_phase
 
