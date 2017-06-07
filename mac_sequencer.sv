@@ -1,36 +1,14 @@
-class crc7_transaction extends uvm_sequence_item;
-  bit[6:0] crc;
-  
-  function new(string name = "");
-    super.new(name);
-  endfunction: new
-  
-  `uvm_object_utils_begin(crc7_transaction)
-    `uvm_field_int(crc, UVM_ALL_ON)
-  `uvm_object_utils_end
-endclass: crc7_transaction
+`ifndef MAC_SEQUENCER__SV
+`define MAC_SEQUENCER__SV
 
-class crc7_sequence extends uvm_sequence#(crc7_transaction);
-  `uvm_object_utils(crc7_sequence)
-  
-  function new(string name = "");
-    super.new(name);
-  endfunction: new
-  
-  task body();
-    crc7_transaction c7_tx;
-    
-    repeat (1) begin
-      c7_tx = crc7_transaction::type_id::create(.name("c7_tx"), .contxt(get_full_name()));
+class mac_sequencer extends uvm_sequencer #(mac_rw);
 
-      start_item(c7_tx);
-      assert(c7_tx.randomize());
-      finish_item(c7_tx);
-      //c7_tx.end_event.wait_on();
-    end
-  endtask: body
-endclass: crc7_sequence
+    `uvm_component_utils(mac_sequencer)
 
-typedef uvm_sequencer#(crc7_transaction) crc7_sequencer;
-  
-  
+    function new(input string name, uvm_component parent=null);
+        super.new(name, parent);
+    endfunction : new
+
+endclass : mac_sequencer
+
+`endif
