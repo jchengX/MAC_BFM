@@ -1,99 +1,63 @@
-class crc7_monitor_before extends uvm_monitor;
-  `uvm_component_utils(crc7_monitor_before)
-  
-  uvm_analysis_port#(crc7_transaction) mon_ap_before;
-  
-  virtual crc7_if vif;
-  
-  function new(string name, uvm_component parent);
-    super.new(name, parent);
-  endfunction: new
-  
-  function void build_phase(uvm_phase phase);
-    super.build_phase(phase);
-    
-    void'(uvm_resource_db#(virtual crc7_if)::read_by_name(.scope("ifs"), .name("crc7_if"), .val(vif)));
-    mon_ap_before = new(.name("mon_ap_before"), .parent(this));
-  endfunction: build_phase
-  
-  task run_phase(uvm_phase phase);
-    crc7_transaction c7_tx;
-    c7_tx = crc7_transaction::type_id::create(.name("c7_tx"), .contxt(get_full_name()));
-    
-    forever begin
-      @(negedge vif.sig_clk)
-      begin
-        c7_tx.crc = vif.sig_crc;
-        `uvm_info("monitor_before",$sformatf("c7_tx.crc is '%b'", c7_tx.crc), UVM_LOW);
-        mon_ap_before.write(c7_tx);
-      end
-    end
-  endtask: run_phase
-endclass: crc7_monitor_before
+`ifndef APB_MONITOR__SV
+`define APB_MONITOR__SV
 
-class crc7_monitor_after extends uvm_monitor;
-  `uvm_component_utils(crc7_monitor_after)
-  
-  uvm_analysis_port#(crc7_transaction) mon_ap_after;
-  
-  virtual crc7_if vif;
-  
-  crc7_transaction c7_tx;
-  	//For coverage
-	crc7_transaction c7_tx_cg;
 
-	//Define coverpoints
-	covergroup crc7_cg;
-	endgroup: crc7_cg
-   
-  function new(string name, uvm_component parent);
-    super.new(name, parent);
-    crc7_cg = new;
-  endfunction: new
-  
-  function void build_phase(uvm_phase phase);
-    super.build_phase(phase);
-    
-    void'(uvm_resource_db#(virtual crc7_if)::read_by_name(.scope("ifs"), .name("crc7_if"), .val(vif)));
-    mon_ap_after = new(.name("mon_ap_after"), .parent(this));
-  endfunction: build_phase
-  
-  task run_phase(uvm_phase phase);
-    integer count = 42, rst = 0;
-    
-    c7_tx = crc7_transaction::type_id::create(.name("c7_tx"), .contxt(get_full_name()));
-    
-    forever begin
-      @(negedge vif.sig_clk)
-      begin
-        rst = 0;
-        count = count - 1;
-        if(count == 0)
-          begin
-            rst = 1;
-            count = 42;
-            predictor();
-            `uvm_info("monitor_after",$sformatf("c7_tx.crc is '%b'", c7_tx.crc), UVM_LOW);
-            c7_tx_cg = c7_tx;
-          
-            crc7_cg.sample();
-          
-            mon_ap_after.write(c7_tx);
-          end
+class mac_monitor extends uvm_monitor;
+    bit     has_fcov;
+
+    virtual mac_if.passive sigs;
+
+    uvm_analysis_port#(mac_rw) ap;
+    mac_config cfg;
+
+    `uvm_component_utils(mac_monitor)
+    `uvm_register_cb(mac_monitor,mac_monitor_cbs)
+
+    function new(string name, uvm_component parent = null);
+        super.new(name, parent);
+        ap = new("ap", this);
+    endfunction: new
+
+    virtual function void build_phase(uvm_phase phase);
+        mac_agent agent;
+        if ($cast(agent, get_parent()) && agent != null) begin
+            sigs = agent.vif;
         end
-      end
+        else begin
+            `uvm_fatal("APB/MON/NOVIF", "No virtual interface specified for this monitor instance")
+        end
+    endfunction
 
-endtask: run_phase
-
-virtual function void predictor();
-  c7_tx.crc = 7'b0101010;
-endfunction: predictor
-endclass: crc7_monitor_after
+    virtual task run_phase(uvm_phase phase);
+        super.run_phase(phase);
+        forever begin
+            mac_rw tr;
             
-        
-  
-  
-  
-  
-        
-    
+            // Wait for a SETUP cycle
+            do begin
+               @ (this.sigs.pck);
+            end
+            while (this.sigs.pck.psel !== 1'b1 ||
+                   this.sigs.pck.penable !== 1'b0);
+
+            tr = mac_rw::type_id::create("tr", this);
+            
+            tr.kind = (this.sigs.pck.pwrite) ? mac_rw::WRITE : mac_rw::READ;
+            tr.addr = this.sigs.pck.paddr;
+
+            @ (this.sigs.pck);
+            if (this.sigs.pck.penable !== 1'b1) begin
+                `uvm_error("APB", "APB protocol violation: SETUP cycle not followed by ENABLE cycle");
+            end
+            tr.data = (tr.kind == mac_rw::READ) ? this.sigs.pck.prdata :
+                                                  this.sigs.pck.pwdata;
+
+            `uvm_do_callbacks(mac_monitor,mac_monitor_cbs,trans_observed(this,tr))
+
+            ap.write(tr);
+        end
+    endtask: run_phase
+
+endclass: mac_monitor
+
+`endif
